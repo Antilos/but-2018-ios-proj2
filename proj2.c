@@ -64,9 +64,11 @@ typedef struct shm_sem{
 
     //for synchronizing boarding
     int boatCapacity;
-    int *boatCounter;
-    int *hacksOnBoat;
-    int *serfsOnBoat;
+    int *boatCounter; //total persons already boarded
+    int *hacksOnBoat; //hackers already boarded
+    int *serfsOnBoat; //serfs already boarded
+    int *hacksWaitingToBoard; //hacks waiting in line for a captain
+    int *serfsWaitingToBoard; //serfs waiting in line for a captain
     sem_t *semTurnstile1;
     sem_t *semTurnstile2;
     sem_t *captainsMutex;
