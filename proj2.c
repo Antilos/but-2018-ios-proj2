@@ -54,17 +54,18 @@ typedef struct shm_sem{
 
     int *hackCounter;
     sem_t *semHackCounter;
-
     int *serfCounter;
     sem_t *semSerfCounter;
 
     int *hacksOnPier;
-    sem_t *semHacksOnPier;
-
     int *serfsOnPier;
-    sem_t *semSerfsOnPier;
+
+    int *hacksWaitingToBoard;
+    int *serfsWaitingToBoard;
 
     //for synchronizing boarding
+    sem_t *semHacksOnPierQueue;
+    sem_t *semSerfsOnPierQueue;
     int boatCapacity;
     int *boatCounter;
     int *hacksOnBoat;
@@ -168,25 +169,34 @@ int mainWrapper(int argc, char* argv[]){
     ftruncate(shmHacksOnPier, sizeof(int));
     shared->hacksOnPier = (int*)mmap(0, sizeof(int), PROT_READ|PROT_WRITE, MAP_SHARED, shmHacksOnPier, 0);
     *(shared->hacksOnPier) = 0; //initialization
-    shared->semHacksOnPier = (sem_t*)malloc(sizeof(sem_t)); //semaphore guarding the action counter
-    if(sem_init(shared->semHacksOnPier, 1, 1) < 0){
-        return 3; //Error while initializing semaphore
-    }
+    
     /*shared serfs on pier counter*/
     int shmSerfsOnPier = shm_open("/shmSerfsOnPier", O_CREAT | O_RDWR, 0666);
     ftruncate(shmSerfsOnPier, sizeof(int));
     shared->serfsOnPier = (int*)mmap(0, sizeof(int), PROT_READ|PROT_WRITE, MAP_SHARED, shmSerfsOnPier, 0);
     *(shared->serfsOnPier) = 0; //initialization
-    shared->semSerfsOnPier = (sem_t*)malloc(sizeof(sem_t)); //semaphore guarding the action counter
-    if(sem_init(shared->semSerfsOnPier, 1, 1) < 0){
-        return 3; //Error while initializing semaphore
-    }
 
      /*shared boat counter*/
     int shmBoatCounter = shm_open("/shmBoatCounter", O_CREAT | O_RDWR, 0666);
     ftruncate(shmBoatCounter, sizeof(int));
     shared->boatCounter = (int*)mmap(0, sizeof(int), PROT_READ|PROT_WRITE, MAP_SHARED, shmBoatCounter, 0);
     *(shared->boatCounter) = 0; //initialization
+
+    /*HacksOnPierQueue*/
+    int shmHacksOnPierQueue = shm_open("/shmHacksOnPierQueue", O_CREAT | O_RDWR, 0666);
+    ftruncate(shmHacksOnPierQueue, sizeof(sem_t));
+    shared->semHacksOnPierQueue = (sem_t*)mmap(0, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED, shmHacksOnPierQueue, 0);
+    if(sem_init(shared->semHacksOnPierQueue, 1, 0) < 0){
+        return 3; //Error while initializing semaphore
+    }
+
+    /*SerfsOnPierQueue*/
+    int shmSerfsOnPierQueue = shm_open("/shmSerfsOnPierQueue", O_CREAT | O_RDWR, 0666);
+    ftruncate(shmSerfsOnPierQueue, sizeof(sem_t));
+    shared->semSerfsOnPierQueue = (sem_t*)mmap(0, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED, shmSerfsOnPierQueue, 0);
+    if(sem_init(shared->semSerfsOnPierQueue, 1, 0) < 0){
+        return 3; //Error while initializing semaphore
+    }
 
     /*shared hacks on boat counter*/
     int shmHacksOnBoat = shm_open("/shmHacksOnBoat", O_CREAT | O_RDWR, 0666);
@@ -265,8 +275,8 @@ int mainWrapper(int argc, char* argv[]){
         sem_destroy(shared->semActionCounter);
         sem_destroy(shared->semHackCounter);
         sem_destroy(shared->semSerfCounter);
-        sem_destroy(shared->semSerfsOnPier);
-        sem_destroy(shared->semHacksOnPier);
+        sem_destroy(shared->semSerfsOnPierQueue);
+        sem_destroy(shared->semHacksOnPierQueue);
         sem_destroy(shared->semTurnstile1);
         sem_destroy(shared->semTurnstile2);
         sem_destroy(shared->captainsMutex);
@@ -381,17 +391,17 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
         personsCounter = shared->hackCounter;
         semPersonsCounter = shared->semHackCounter;
         personsOnPier = shared->hacksOnPier;
-        semPersonsOnPier = shared->semHacksOnPier;
+        semPersonsOnPierQueue = shared->semHacksOnPierQueue;
         otherPersonsOnPier = shared->serfsOnPier;
-        semOtherPersonsOnPier = shared->semSerfsOnPier;
+        semOtherPersonsOnPierQueue = shared->semSerfsOnPierQueue;
     }else{
         strcpy(typeStr, "SERF");
         personsCounter = shared->serfCounter;
         semPersonsCounter = shared->semSerfCounter;
         personsOnPier = shared->serfsOnPier;
-        semPersonsOnPier = shared->semSerfsOnPier;
+        semPersonsOnPierQueue = shared->semSerfsOnPierQueue;
         otherPersonsOnPier = shared->hacksOnPier;
-        semOtherPersonsOnPier = shared->semHacksOnPier;
+        semOtherPersonsOnPierQueue = shared->semHacksOnPierQueue;
     }
 
     //preform action
@@ -439,16 +449,30 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
             dprintf("--DING: Tries to board\n");
             //check if there is enough people to form crew
             if(*personsOnPier == 4){
+                for(int i = 0; i < 4; i++)
+                {
+                    sem_post(semPersonsOnPierQueue) //let 4 persons board
+                }
                 (*(personsOnPier))=0;
-                isCaptain = true;
+                isCaptain = true; //become captain
             }else if(*personsOnPier == 2 && *otherPersonsOnPier >= 2){
+                for(int i = 0; i < 2; i++)
+                {
+                    sem_post(semPersonsOnPierQueue) //let 4 persons board
+                }
+                for(int i = 0; i < 2; i++)
+                {
+                    sem_post(semOtherPersonsOnPierQueue) //let 4 persons board
+                }
                 (*(personsOnPier))=0;
                 (*(otherPersonsOnPier))-=2;
-                isCaptain = true;
+                isCaptain = true; //become captain
             }else{
                 sem_post(shared->captainsMutex);
-                return 1; //didn't manage to board
+                //return 1; //didn't manage to board
             }
+
+            sem_wait(semPersonsOnPierQueue); //wait for the captain to let us board
 
             //ALL ABOARD!!!
             sem_wait(shared->mutex);
