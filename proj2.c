@@ -74,6 +74,7 @@ typedef struct shm_sem{
     sem_t *semTurnstile2;
     sem_t *captainsMutex;
     sem_t *semBoardRide;
+    int *membersStillToLeave;
     sem_t *semCaptainCanLeave;
 }shm_sem_t;
 
@@ -250,6 +251,12 @@ int mainWrapper(int argc, char* argv[]){
     if(sem_init(shared->semCaptainCanLeave, 1, 0) < 0){
         return 3; //Error while initializing semaphore
     }
+
+    /*shared serfs on boat counter*/
+    int shmMembersStillToLeave = shm_open("/shmMembersStillToLeave", O_CREAT | O_RDWR, 0666);
+    ftruncate(shmMembersStillToLeave, sizeof(int));
+    shared->membersStillToLeave = (int*)mmap(0, sizeof(int), PROT_READ|PROT_WRITE, MAP_SHARED, shmMembersStillToLeave, 0);
+    *(shared->membersStillToLeave) = 0; //initialization
 
     int status1 = 0;
     int status2 = 0;
@@ -578,19 +585,16 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
                 sem_wait(shared->mutex);
                 printf("%d: %s %d: captain exits: %d: %d\n", *(shared->actionCounter), typeStr, *id, *(shared->hacksOnPier), *(shared->serfsOnPier));
                 (*(shared->actionCounter))++;
-                (*(shared->memebersStillToLeave)) == 3; //reset the member counter
+                (*(shared->membersStillToLeave)) == 3; //reset the member counter
                 sem_post(shared->captainsMutex);
-<<<<<<< HEAD
             }else{
                 sem_wait(shared->mutex);
                 printf("%d: %s %d: member exits: %d: %d\n", *(shared->actionCounter), typeStr, *id, *(shared->hacksOnPier), *(shared->serfsOnPier));
                 (*(shared->actionCounter))++;
-                (*(shared->memebersStillToLeave))--;
-                if(*(shared->memebersStillToLeave) == 0){ //all all the members gone?
+                (*(shared->membersStillToLeave))--;
+                if(*(shared->membersStillToLeave) == 0){ //all all the members gone?
                     sem_post(shared->semCaptainCanLeave);
                 }
-=======
->>>>>>> 00f87a40aa1db0eb85026af501ab4023ee21935f
             }
             sem_post(shared->mutex);
             ret = 0;
