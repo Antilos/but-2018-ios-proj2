@@ -505,6 +505,7 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
                 printf("%d: %s %d: member exits: %d: %d\n", *(shared->actionCounter), typeStr, *id, *(shared->hacksOnPier), *(shared->serfsOnPier));
                 (*(shared->actionCounter))++;
             }
+            sem_post(shared->mutex);
             return 0;
             
             break;
