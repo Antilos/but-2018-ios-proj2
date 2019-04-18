@@ -261,10 +261,23 @@ int mainWrapper(int argc, char* argv[]){
         munmap(shared->actionCounter, sizeof(int));
         munmap(shared->hacksOnPier, sizeof(int));
         munmap(shared->serfsOnPier, sizeof(int));
+        sem_destroy(shared->mutex);
         sem_destroy(shared->semActionCounter);
+        sem_destroy(shared->semHackCounter);
+        sem_destroy(shared->semSerfCounter);
         sem_destroy(shared->semSerfsOnPier);
         sem_destroy(shared->semHacksOnPier);
+        sem_destroy(shared->semTurnstile1);
+        sem_destroy(shared->semTurnstile2);
+        sem_destroy(shared->captainsMutex);
         sem_destroy(shared->semIO);
+        munmap(shared->mutex, sizeof(sem_t));
+        munmap(shared->semTurnstile1, sizeof(sem_t));
+        munmap(shared->semTurnstile2, sizeof(sem_t));
+        munmap(shared->captainsMutex, sizeof(sem_t));
+        munmap(shared->boatCounter, sizeof(int));
+        munmap(shared->hacksOnBoat, sizeof(int));
+        munmap(shared->serfsOnBoat, sizeof(int));
 
         exit(0);
     }
