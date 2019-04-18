@@ -447,7 +447,7 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
                 isCaptain = true;
             }else{
                 sem_post(shared->captainsMutex);
-                //return 1; //didn't manage to board
+                return 1; //didn't manage to board
             }
 
             //ALL ABOARD!!!
