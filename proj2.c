@@ -199,17 +199,24 @@ int mainWrapper(int argc, char* argv[]){
     *(shared->serfsOnBoat) = 0; //initialization
 
     //turnstile semaphores for barrier implementation (double randezvouse)
-    shared->semTurnstile1 = (sem_t*)malloc(sizeof(sem_t)); //bars entry to crit section untill all processes have arrived
+    int shmTurnstile1 = shm_open("/shmTurnstile1", O_CREAT | O_RDWR, 0666);
+    ftruncate(shmTurnstile1, sizeof(sem_t));
+    shared->semTurnstile1 = (sem_t*)mmap(0, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED, shmTurnstile1, 0); //bars entry to crit section untill all processes have arrived
     if(sem_init(shared->semTurnstile1, 1, 0) < 0){ //locked
         return 3; //Error while initializing semaphore
     }
-    shared->semTurnstile2 = (sem_t*)malloc(sizeof(sem_t)); //makes processes wait until all other processes have finished crit section
+
+    int shmTurnstile2 = shm_open("/shmTurnstile2", O_CREAT | O_RDWR, 0666);
+    ftruncate(shmTurnstile2, sizeof(sem_t));
+    shared->semTurnstile2 = (sem_t*)mmap(0, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED, shmTurnstile2, 0);//makes processes wait until all other processes have finished crit section
     if(sem_init(shared->semTurnstile2, 1, 1) < 0){ //unlocked
         return 3; //Error while initializing semaphore
     }
 
      /*mutex for when a process is checking if whether it can become captain*/
-    shared->captainsMutex = (sem_t*)malloc(sizeof(sem_t));
+    int shmCaptainsMutex = shm_open("/shmCaptainsMutex", O_CREAT | O_RDWR, 0666);
+    ftruncate(shmCaptainsMutex, sizeof(sem_t));
+    shared->captainsMutex = (sem_t*)mmap(0, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED, shmCaptainsMutex, 0);
     if(sem_init(shared->captainsMutex, 1, 1) < 0){
         return 3; //Error while initializing semaphore
     }
