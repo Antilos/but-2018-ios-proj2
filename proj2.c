@@ -16,7 +16,7 @@
 #define log(msg) do{printf("LOG: %s\n", msg);}while(0)
 #define elog(msg) do{printf("ERROR LOG: %s\n", msg);}while(0)
 #define msg(caller, msg) do{printf("%s: %s\n", caller, msg);}while(0)
-#define dprintf(str, ...) do{printf(str, ...);}while(0)
+#define dprintf(str, ...) do{printf(str, __VA_ARGS__);}while(0)
 
 #ifdef NDEBUG
 #define log(msg) do{;}while(0)
