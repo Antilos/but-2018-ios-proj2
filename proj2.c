@@ -478,8 +478,9 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
             dprintf("-- %s %d: I'll try to be Captain\n", typeStr, *id, *(shared->boatCounter));
             sem_post(shared->mutex);
             //check if there is enough people to form crew
-            sem_wait(shared->mutex);
             if(*personsOnPier >= 4){
+                sem_wait(shared->captainsMutex);
+                sem_wait(shared->mutex);
                 for(int i = 0; i < 4; i++)
                 {
                     sem_post(semPersonsOnPierQueue); //let 4 persons board
@@ -489,13 +490,15 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
                 dprintf("-- %s %d: I'll be Captain\n", typeStr, *id, *(shared->boatCounter));
                 sem_post(shared->mutex);
             }else if(*personsOnPier >= 2 && *otherPersonsOnPier >= 2){
+                sem_wait(shared->captainsMutex);
+                sem_wait(shared->mutex);
                 for(int i = 0; i < 2; i++)
                 {
-                    sem_post(semPersonsOnPierQueue); //let 4 persons board
+                    sem_post(semPersonsOnPierQueue); //let 2 persons board
                 }
                 for(int i = 0; i < 2; i++)
                 {
-                    sem_post(semOtherPersonsOnPierQueue); //let 4 persons board
+                    sem_post(semOtherPersonsOnPierQueue); //let 2 persons board
                 }
                 (*(personsOnPier))-=2;
                 (*(otherPersonsOnPier))-=2;
@@ -517,7 +520,7 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
             sem_wait(shared->mutex);
             (*(shared->boatCounter)) += 1;
             if((*(shared->boatCounter)) == shared->boatCapacity){
-                sem_wait(shared->captainsMutex); //lock the captains mutex so no other persons try to board
+                //sem_wait(shared->captainsMutex); //lock the captains mutex so no other persons try to board
                 sem_wait(shared->semTurnstile2);
                 sem_post(shared->semTurnstile1);
             }
