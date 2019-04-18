@@ -456,14 +456,14 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
             sem_post(shared->mutex);
             
             sem_wait(shared->mutex);
-            printf("--DING: Waiting for all to board\n");
+            printf("-- %s %d: waiting for all to board boatCounter: %d\n", typeStr, *id, *(shared->boatCounter));
             sem_post(shared->mutex);
 
             //wait for the boat to be fully boarded
             sem_wait(shared->semTurnstile1);
             sem_post(shared->semTurnstile1);
             sem_wait(shared->mutex);
-            printf("--DING: All boarded\n");
+            printf("-- %s %d: All boarded boatCounter: %d\n", typeStr, *id, *(shared->boatCounter));
             sem_post(shared->mutex);
             
             //SAIL!!!
@@ -474,10 +474,11 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
                 sem_post(shared->captainsMutex);
             }else{
                 sem_wait(shared->mutex);
-                printf("--DING: Waiting for captain\n");
+                printf("-- %s %d: waiting for Captain board boatCounter: %d\n", typeStr, *id, *(shared->boatCounter));
                 sem_post(shared->mutex);
                 sem_wait(shared->captainsMutex);
                 sem_post(shared->captainsMutex);
+                printf("-- %s %d: Boat ride done boatCounter: %d\n", typeStr, *id, *(shared->boatCounter));
             }
 
             //barrier second phase
@@ -490,7 +491,7 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
             sem_post(shared->mutex);
 
             sem_wait(shared->mutex);
-            printf("DING: Waiting for everyone to get off\n");
+            printf("-- %s %d: waiting for everyone to get off boatCounter: %d\n", typeStr, *id, *(shared->boatCounter));
             sem_post(shared->mutex);
             //wait for everyone to get off the boat
             sem_wait(shared->semTurnstile2);
