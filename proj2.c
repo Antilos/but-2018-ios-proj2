@@ -473,7 +473,7 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
             sem_wait(shared->mutex);
             dprintf("-- %s %d: I'll wait to be Captain\n", typeStr, *id, *(shared->boatCounter));
             sem_post(shared->mutex);
-            sem_wait(shared->captainsMutex);
+            //sem_wait(shared->captainsMutex);
             sem_wait(shared->mutex);
             dprintf("-- %s %d: I'll try to be Captain\n", typeStr, *id, *(shared->boatCounter));
             sem_post(shared->mutex);
@@ -503,7 +503,7 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
                 dprintf("-- %s %d: I'll be Captain\n", typeStr, *id, *(shared->boatCounter));
                 sem_post(shared->mutex);
             }else{
-                sem_post(shared->captainsMutex);
+                //sem_post(shared->captainsMutex);
                 sem_post(shared->mutex);
                 //return 1; //didn't manage to board
             }
@@ -518,14 +518,11 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
             //     return 1; //didn't manage to board
             // }
 
-            if(isCaptain){
-                printf("%d: %s %d: boards: %d: %d\n", *(shared->actionCounter), typeStr, *id, *(shared->hacksOnPier), *(shared->serfsOnPier));
-                (*(shared->actionCounter))++;
-            }
 
             //barrier first phase
             (*(shared->boatCounter)) += 1;
             if((*(shared->boatCounter)) == shared->boatCapacity){
+                sem_wait(sem->captainsMutex); //lock the captains mutex so no other persons try to board
                 sem_wait(shared->semTurnstile2);
                 sem_post(shared->semTurnstile1);
             }
@@ -542,6 +539,11 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
             dprintf("-- %s %d: All boarded boatCounter: %d\n", typeStr, *id, *(shared->boatCounter));
             sem_post(shared->mutex);
             
+            if(isCaptain){
+                printf("%d: %s %d: boards: %d: %d\n", *(shared->actionCounter), typeStr, *id, *(shared->hacksOnPier), *(shared->serfsOnPier));
+                (*(shared->actionCounter))++;
+            }
+
             //SAIL!!!
 
             if(isCaptain){
