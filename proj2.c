@@ -454,7 +454,13 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
             break;
         
         case board:
+            sem_wait(shared->mutex);
+            dprintf("-- %s %d: I'll wait to be Captain\n", typeStr, *id, *(shared->boatCounter));
+            sem_post(shared->mutex);
             sem_wait(shared->captainsMutex);
+            sem_wait(shared->mutex);
+            dprintf("-- %s %d: I'll try to be Captain\n", typeStr, *id, *(shared->boatCounter));
+            sem_post(shared->mutex);
             //check if there is enough people to form crew
             sem_wait(shared->mutex);
             if(*personsOnPier >= 4){
@@ -561,8 +567,7 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
                 (*(shared->actionCounter))++;
             }
             sem_post(shared->mutex);
-            return 0;
-            
+            ret = 0;
             break;
 
         default:
