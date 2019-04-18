@@ -2,6 +2,8 @@ CFLAGS = -std=gnu99 -Wall -Wextra -pedantic -Wno-unknown-pragmas -g3
 RESULTS = proj2
 ARCHIVE = xkocal00.zip
 
+DEBUG =
+
 .PHONY = clean
 .PHONY = zip
 
@@ -14,7 +16,7 @@ runb: proj2b
 	./proj2b 6 2 2 2 20 6
 
 proj2: proj2.c
-	gcc $(CFLAGS) $^ -lrt -lpthread -o $@
+	gcc $(CFLAGS) $(DEBUG) $^ -lrt -lpthread -o $@
 
 proj2b: proj2Backup.c
 	gcc $(CFLAGS) $^ -lrt -lpthread -o $@
