@@ -74,6 +74,7 @@ typedef struct shm_sem{
     sem_t *semTurnstile2;
     sem_t *captainsMutex;
     sem_t *semBoardRide;
+    sem_t *semCaptainCanLeave;
 }shm_sem_t;
 
 int mainWrapper(int argc, char* argv[]);
@@ -239,6 +240,14 @@ int mainWrapper(int argc, char* argv[]){
     ftruncate(shmSemBoardRide, sizeof(sem_t));
     shared->semBoardRide = (sem_t*)mmap(0, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED, shmSemBoardRide, 0);
     if(sem_init(shared->semBoardRide, 1, 0) < 0){
+        return 3; //Error while initializing semaphore
+    }
+
+    /*Semaphore to keep the from leaving before all members are gone*/
+    int shmSemCaptainCanLeave = shm_open("/shmSemCaptainCanLeave", O_CREAT | O_RDWR, 0666);
+    ftruncate(shmSemCaptainCanLeave, sizeof(sem_t));
+    shared->semCaptainCanLeave = (sem_t*)mmap(0, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED, shmSemCaptainCanLeave, 0);
+    if(sem_init(shared->semCaptainCanLeave, 1, 0) < 0){
         return 3; //Error while initializing semaphore
     }
 
@@ -557,14 +566,21 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
             sem_wait(shared->semTurnstile2);
             sem_post(shared->semTurnstile2);
 
-            sem_wait(shared->mutex);
             if(isCaptain){
+                sem_wait(shared->semCaptainCanLeave); //wait for all members to get off
+                sem_wait(shared->mutex);
                 printf("%d: %s %d: captain exits: %d: %d\n", *(shared->actionCounter), typeStr, *id, *(shared->hacksOnPier), *(shared->serfsOnPier));
                 (*(shared->actionCounter))++;
+                (*(shared->memebersStillToLeave)) == 3; //reset the member counter
                 sem_post(shared->captainsMutex);
             }else{
+                sem_wait(shared->mutex);
                 printf("%d: %s %d: member exits: %d: %d\n", *(shared->actionCounter), typeStr, *id, *(shared->hacksOnPier), *(shared->serfsOnPier));
                 (*(shared->actionCounter))++;
+                (*(shared->memebersStillToLeave))--;
+                if(*(shared->memebersStillToLeave) == 0){ //all all the members gone?
+                    sem_post(shared->semCaptainCanLeave);
+                }
             }
             sem_post(shared->mutex);
             ret = 0;
