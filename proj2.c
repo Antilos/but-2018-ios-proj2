@@ -384,8 +384,8 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
     int *personsOnPier;
     int *otherPersonsOnPier;
     sem_t *semPersonsCounter;
-    sem_t *semPersonsOnPier;
-    sem_t *semOtherPersonsOnPier;
+    sem_t *semPersonsOnPierQueue;
+    sem_t *semOtherPersonsOnPierQueue;
     if(type == HACK){
         strcpy(typeStr, "HACK");
         personsCounter = shared->hackCounter;
