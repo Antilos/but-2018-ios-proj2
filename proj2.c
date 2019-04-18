@@ -522,7 +522,7 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
             //barrier first phase
             (*(shared->boatCounter)) += 1;
             if((*(shared->boatCounter)) == shared->boatCapacity){
-                sem_wait(sem->captainsMutex); //lock the captains mutex so no other persons try to board
+                sem_wait(shared->captainsMutex); //lock the captains mutex so no other persons try to board
                 sem_wait(shared->semTurnstile2);
                 sem_post(shared->semTurnstile1);
             }
