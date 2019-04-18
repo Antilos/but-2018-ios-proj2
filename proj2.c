@@ -256,7 +256,7 @@ int mainWrapper(int argc, char* argv[]){
     int shmMembersStillToLeave = shm_open("/shmMembersStillToLeave", O_CREAT | O_RDWR, 0666);
     ftruncate(shmMembersStillToLeave, sizeof(int));
     shared->membersStillToLeave = (int*)mmap(0, sizeof(int), PROT_READ|PROT_WRITE, MAP_SHARED, shmMembersStillToLeave, 0);
-    *(shared->membersStillToLeave) = 0; //initialization
+    *(shared->membersStillToLeave) = 3; //initialization (3, since boat capacity is 4)
 
     int status1 = 0;
     int status2 = 0;
