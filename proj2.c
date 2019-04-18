@@ -416,7 +416,7 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
                     printf("%d: %s %d: is back\n", *(shared->actionCounter), typeStr, *id);
                     (*(shared->actionCounter))++;
                     sem_post(shared->mutex);
-                    exit(0);
+                    //exit(0);
                 }
             }
             break;
