@@ -451,18 +451,18 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
             if(*personsOnPier == 4){
                 for(int i = 0; i < 4; i++)
                 {
-                    sem_post(semPersonsOnPierQueue) //let 4 persons board
+                    sem_post(semPersonsOnPierQueue); //let 4 persons board
                 }
                 (*(personsOnPier))=0;
                 isCaptain = true; //become captain
             }else if(*personsOnPier == 2 && *otherPersonsOnPier >= 2){
                 for(int i = 0; i < 2; i++)
                 {
-                    sem_post(semPersonsOnPierQueue) //let 4 persons board
+                    sem_post(semPersonsOnPierQueue); //let 4 persons board
                 }
                 for(int i = 0; i < 2; i++)
                 {
-                    sem_post(semOtherPersonsOnPierQueue) //let 4 persons board
+                    sem_post(semOtherPersonsOnPierQueue); //let 4 persons board
                 }
                 (*(personsOnPier))=0;
                 (*(otherPersonsOnPier))-=2;
