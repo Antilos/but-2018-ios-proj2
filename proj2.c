@@ -457,16 +457,16 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
             sem_wait(shared->captainsMutex);
             //check if there is enough people to form crew
             sem_wait(shared->mutex);
-            if(*personsOnPier == 4){
+            if(*personsOnPier >= 4){
                 for(int i = 0; i < 4; i++)
                 {
                     sem_post(semPersonsOnPierQueue); //let 4 persons board
                 }
-                (*(personsOnPier))=0;
+                (*(personsOnPier))-=4;
                 isCaptain = true; //become captain
                 dprintf("-- %s %d: I'll be Captain\n", typeStr, *id, *(shared->boatCounter));
                 sem_post(shared->mutex);
-            }else if(*personsOnPier == 2 && *otherPersonsOnPier >= 2){
+            }else if(*personsOnPier >= 2 && *otherPersonsOnPier >= 2){
                 for(int i = 0; i < 2; i++)
                 {
                     sem_post(semPersonsOnPierQueue); //let 4 persons board
@@ -475,7 +475,7 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
                 {
                     sem_post(semOtherPersonsOnPierQueue); //let 4 persons board
                 }
-                (*(personsOnPier))=0;
+                (*(personsOnPier))-=2;
                 (*(otherPersonsOnPier))-=2;
                 isCaptain = true; //become captain
                 dprintf("-- %s %d: I'll be Captain\n", typeStr, *id, *(shared->boatCounter));
