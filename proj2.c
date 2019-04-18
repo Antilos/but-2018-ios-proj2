@@ -553,7 +553,14 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
             sem_wait(shared->mutex);
             dprintf("-- %s %d: waiting for everyone to get off boatCounter: %d\n", typeStr, *id, *(shared->boatCounter));
             sem_post(shared->mutex);
-            //wait for everyone to get off the boat
+
+            //get of boat if you are not the captain (captain waits for everyone to get off)
+            sem_wait(shared->mutex);
+            if(!isCaptain){
+                printf("%d: %s %d: member exits: %d: %d\n", *(shared->actionCounter), typeStr, *id, *(shared->hacksOnPier), *(shared->serfsOnPier));
+                (*(shared->actionCounter))++;
+            }
+            sem_post(shared->mutex);
             sem_wait(shared->semTurnstile2);
             sem_post(shared->semTurnstile2);
 
@@ -562,9 +569,6 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
                 printf("%d: %s %d: captain exits: %d: %d\n", *(shared->actionCounter), typeStr, *id, *(shared->hacksOnPier), *(shared->serfsOnPier));
                 (*(shared->actionCounter))++;
                 sem_post(shared->captainsMutex);
-            }else{
-                printf("%d: %s %d: member exits: %d: %d\n", *(shared->actionCounter), typeStr, *id, *(shared->hacksOnPier), *(shared->serfsOnPier));
-                (*(shared->actionCounter))++;
             }
             sem_post(shared->mutex);
             ret = 0;
