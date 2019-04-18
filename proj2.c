@@ -512,14 +512,9 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
             sem_wait(semPersonsOnPierQueue); //wait for the captain to let us board
 
             //ALL ABOARD!!!
-            // sem_wait(shared->mutex);
-            // if(!canBoard(type, shared)){ //this person can't board
-            //     sem_post(shared->mutex);
-            //     return 1; //didn't manage to board
-            // }
-
 
             //barrier first phase
+            sem_wait(shared->mutex);
             (*(shared->boatCounter)) += 1;
             if((*(shared->boatCounter)) == shared->boatCapacity){
                 sem_wait(shared->captainsMutex); //lock the captains mutex so no other persons try to board
