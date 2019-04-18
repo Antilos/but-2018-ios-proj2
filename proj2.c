@@ -73,6 +73,7 @@ typedef struct shm_sem{
     sem_t *semTurnstile1;
     sem_t *semTurnstile2;
     sem_t *captainsMutex;
+    sem_t *semBoardRide;
 }shm_sem_t;
 
 int mainWrapper(int argc, char* argv[]);
@@ -230,6 +231,14 @@ int mainWrapper(int argc, char* argv[]){
     ftruncate(shmCaptainsMutex, sizeof(sem_t));
     shared->captainsMutex = (sem_t*)mmap(0, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED, shmCaptainsMutex, 0);
     if(sem_init(shared->captainsMutex, 1, 1) < 0){
+        return 3; //Error while initializing semaphore
+    }
+
+    /*Semaphore to keep persons from exiting the boat before the ride is over*/
+    int shmSemBoardRide = shm_open("/shmSemBoardRide", O_CREAT | O_RDWR, 0666);
+    ftruncate(shmSemBoardRide, sizeof(sem_t));
+    shared->semBoardRide = (sem_t*)mmap(0, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED, shmSemBoardRide, 0);
+    if(sem_init(shared->semBoardRide, 1, 0) < 0){
         return 3; //Error while initializing semaphore
     }
 
@@ -446,7 +455,6 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
         
         case board:
             sem_wait(shared->captainsMutex);
-            dprintf("--DING: Tries to board\n");
             //check if there is enough people to form crew
             if(*personsOnPier == 4){
                 for(int i = 0; i < 4; i++)
@@ -472,6 +480,7 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
                 //return 1; //didn't manage to board
             }
 
+            dprintf("-- %s %d: waiting in queue\n", typeStr, *id, *(shared->boatCounter));
             sem_wait(semPersonsOnPierQueue); //wait for the captain to let us board
 
             //ALL ABOARD!!!
@@ -510,13 +519,13 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
             if(isCaptain){
                 int r = rand() % ((args->R)*1000+1)+20*1000;
                 usleep(r);
-                sem_post(shared->captainsMutex);
+                sem_post(shared->semBoardRide);
             }else{
                 sem_wait(shared->mutex);
-                dprintf("-- %s %d: waiting for Captain board boatCounter: %d\n", typeStr, *id, *(shared->boatCounter));
+                dprintf("-- %s %d: waiting for Captain to wake up\n", typeStr, *id, *(shared->boatCounter));
                 sem_post(shared->mutex);
-                sem_wait(shared->captainsMutex);
-                sem_post(shared->captainsMutex);
+                sem_wait(shared->semBoardRide);
+                sem_post(shared->semBoardRide);
                 dprintf("-- %s %d: Boat ride done boatCounter: %d\n", typeStr, *id, *(shared->boatCounter));
             }
 
@@ -540,6 +549,7 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
             if(isCaptain){
                 printf("%d: %s %d: captain exits: %d: %d\n", *(shared->actionCounter), typeStr, *id, *(shared->hacksOnPier), *(shared->serfsOnPier));
                 (*(shared->actionCounter))++;
+                sem_post(shared->captainsMutex);
             }else{
                 printf("%d: %s %d: member exits: %d: %d\n", *(shared->actionCounter), typeStr, *id, *(shared->hacksOnPier), *(shared->serfsOnPier));
                 (*(shared->actionCounter))++;
