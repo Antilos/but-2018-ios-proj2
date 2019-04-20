@@ -148,6 +148,7 @@ int mainWrapper(int argc, char* argv[]){
     int shmMutex = shm_open("/shmMutex", O_CREAT | O_RDWR, 0666);
     ftruncate(shmMutex, sizeof(sem_t));
     shared->mutex = (sem_t*)mmap(0, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED, shmMutex, 0);
+    close(shmMutex);
     if(sem_init(shared->mutex, 1, 1) < 0){
         return 3; //Error while initializing semaphore
     }
@@ -162,6 +163,7 @@ int mainWrapper(int argc, char* argv[]){
     int shmActionCounter = shm_open("/shmActionCounter", O_CREAT | O_RDWR, 0666);
     ftruncate(shmActionCounter, sizeof(int));
     shared->actionCounter = (int*)mmap(0, sizeof(int), PROT_READ|PROT_WRITE, MAP_SHARED, shmActionCounter, 0);
+    close(shmActionCounter);
     *(shared->actionCounter) = 1; //initialization
     shared->semActionCounter = (sem_t*)malloc(sizeof(sem_t)); //semaphore guarding the action counter
     if(sem_init(shared->semActionCounter, 1, 1) < 0){
@@ -171,36 +173,42 @@ int mainWrapper(int argc, char* argv[]){
     int shmHacksOnPier = shm_open("/shmHacksOnPier", O_CREAT | O_RDWR, 0666);
     ftruncate(shmHacksOnPier, sizeof(int));
     shared->hacksOnPier = (int*)mmap(0, sizeof(int), PROT_READ|PROT_WRITE, MAP_SHARED, shmHacksOnPier, 0);
+    close(shmHacksOnPier);
     *(shared->hacksOnPier) = 0; //initialization
     
     /*shared serfs on pier counter*/
     int shmSerfsOnPier = shm_open("/shmSerfsOnPier", O_CREAT | O_RDWR, 0666);
     ftruncate(shmSerfsOnPier, sizeof(int));
     shared->serfsOnPier = (int*)mmap(0, sizeof(int), PROT_READ|PROT_WRITE, MAP_SHARED, shmSerfsOnPier, 0);
+    close(shmSerfsOnPier);
     *(shared->serfsOnPier) = 0; //initialization
 
      /*shared boat counter*/
     int shmBoatCounter = shm_open("/shmBoatCounter", O_CREAT | O_RDWR, 0666);
     ftruncate(shmBoatCounter, sizeof(int));
     shared->boatCounter = (int*)mmap(0, sizeof(int), PROT_READ|PROT_WRITE, MAP_SHARED, shmBoatCounter, 0);
+    close(shmBoatCounter);
     *(shared->boatCounter) = 0; //initialization
 
     /*shared hacks in queue counter*/
     int shmHacksWaitingToBoard = shm_open("/shmHacksWaitingToBoard", O_CREAT | O_RDWR, 0666);
     ftruncate(shmHacksWaitingToBoard, sizeof(int));
     shared->hacksWaitingToBoard = (int*)mmap(0, sizeof(int), PROT_READ|PROT_WRITE, MAP_SHARED, shmHacksWaitingToBoard, 0);
+    close(shmHacksWaitingToBoard);
     *(shared->hacksWaitingToBoard) = 0; //initialization
 
     /*shared serfs in queue counter*/
     int shmSerfsWaitingToBoard = shm_open("/shmSerfsWaitingToBoard", O_CREAT | O_RDWR, 0666);
     ftruncate(shmSerfsWaitingToBoard, sizeof(int));
     shared->serfsWaitingToBoard = (int*)mmap(0, sizeof(int), PROT_READ|PROT_WRITE, MAP_SHARED, shmSerfsWaitingToBoard, 0);
+    close(shmSerfsWaitingToBoard);
     *(shared->serfsWaitingToBoard) = 0; //initialization
 
     /*HacksOnPierQueue*/
     int shmHacksOnPierQueue = shm_open("/shmHacksOnPierQueue", O_CREAT | O_RDWR, 0666);
     ftruncate(shmHacksOnPierQueue, sizeof(sem_t));
     shared->semHacksOnPierQueue = (sem_t*)mmap(0, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED, shmHacksOnPierQueue, 0);
+    close(shmHacksOnPierQueue);
     if(sem_init(shared->semHacksOnPierQueue, 1, 0) < 0){
         return 3; //Error while initializing semaphore
     }
@@ -209,6 +217,7 @@ int mainWrapper(int argc, char* argv[]){
     int shmSerfsOnPierQueue = shm_open("/shmSerfsOnPierQueue", O_CREAT | O_RDWR, 0666);
     ftruncate(shmSerfsOnPierQueue, sizeof(sem_t));
     shared->semSerfsOnPierQueue = (sem_t*)mmap(0, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED, shmSerfsOnPierQueue, 0);
+    close(shmSerfsOnPierQueue);
     if(sem_init(shared->semSerfsOnPierQueue, 1, 0) < 0){
         return 3; //Error while initializing semaphore
     }
@@ -217,18 +226,21 @@ int mainWrapper(int argc, char* argv[]){
     int shmHacksOnBoat = shm_open("/shmHacksOnBoat", O_CREAT | O_RDWR, 0666);
     ftruncate(shmHacksOnBoat, sizeof(int));
     shared->hacksOnBoat = (int*)mmap(0, sizeof(int), PROT_READ|PROT_WRITE, MAP_SHARED, shmHacksOnBoat, 0);
+    close(shmHacksOnBoat);
     *(shared->hacksOnBoat) = 0; //initialization
 
     /*shared serfs on boat counter*/
     int shmSerfsOnBoat = shm_open("/shmSerfsOnBoat", O_CREAT | O_RDWR, 0666);
     ftruncate(shmSerfsOnBoat, sizeof(int));
     shared->serfsOnBoat = (int*)mmap(0, sizeof(int), PROT_READ|PROT_WRITE, MAP_SHARED, shmSerfsOnBoat, 0);
+    close(shmSerfsOnBoat);
     *(shared->serfsOnBoat) = 0; //initialization
 
     //turnstile semaphores for barrier implementation (double randezvouse)
     int shmTurnstile1 = shm_open("/shmTurnstile1", O_CREAT | O_RDWR, 0666);
     ftruncate(shmTurnstile1, sizeof(sem_t));
     shared->semTurnstile1 = (sem_t*)mmap(0, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED, shmTurnstile1, 0); //bars entry to crit section untill all processes have arrived
+    close(shmTurnstile1);
     if(sem_init(shared->semTurnstile1, 1, 0) < 0){ //locked
         return 3; //Error while initializing semaphore
     }
@@ -236,6 +248,7 @@ int mainWrapper(int argc, char* argv[]){
     int shmTurnstile2 = shm_open("/shmTurnstile2", O_CREAT | O_RDWR, 0666);
     ftruncate(shmTurnstile2, sizeof(sem_t));
     shared->semTurnstile2 = (sem_t*)mmap(0, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED, shmTurnstile2, 0);//makes processes wait until all other processes have finished crit section
+    close(shmTurnstile2);
     if(sem_init(shared->semTurnstile2, 1, 1) < 0){ //unlocked
         return 3; //Error while initializing semaphore
     }
@@ -244,6 +257,7 @@ int mainWrapper(int argc, char* argv[]){
     int shmCaptainsMutex = shm_open("/shmCaptainsMutex", O_CREAT | O_RDWR, 0666);
     ftruncate(shmCaptainsMutex, sizeof(sem_t));
     shared->captainsMutex = (sem_t*)mmap(0, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED, shmCaptainsMutex, 0);
+    close(shmCaptainsMutex);
     if(sem_init(shared->captainsMutex, 1, 1) < 0){
         return 3; //Error while initializing semaphore
     }
@@ -252,6 +266,7 @@ int mainWrapper(int argc, char* argv[]){
     int shmSemBoardRide = shm_open("/shmSemBoardRide", O_CREAT | O_RDWR, 0666);
     ftruncate(shmSemBoardRide, sizeof(sem_t));
     shared->semBoardRide = (sem_t*)mmap(0, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED, shmSemBoardRide, 0);
+    close(shmSemBoardRide);
     if(sem_init(shared->semBoardRide, 1, 0) < 0){
         return 3; //Error while initializing semaphore
     }
@@ -260,6 +275,7 @@ int mainWrapper(int argc, char* argv[]){
     int shmSemCaptainCanLeave = shm_open("/shmSemCaptainCanLeave", O_CREAT | O_RDWR, 0666);
     ftruncate(shmSemCaptainCanLeave, sizeof(sem_t));
     shared->semCaptainCanLeave = (sem_t*)mmap(0, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED, shmSemCaptainCanLeave, 0);
+    close(shmSemCaptainCanLeave);
     if(sem_init(shared->semCaptainCanLeave, 1, 0) < 0){
         return 3; //Error while initializing semaphore
     }
@@ -268,6 +284,7 @@ int mainWrapper(int argc, char* argv[]){
     int shmMembersStillToLeave = shm_open("/shmMembersStillToLeave", O_CREAT | O_RDWR, 0666);
     ftruncate(shmMembersStillToLeave, sizeof(int));
     shared->membersStillToLeave = (int*)mmap(0, sizeof(int), PROT_READ|PROT_WRITE, MAP_SHARED, shmMembersStillToLeave, 0);
+    close(shmMembersStillToLeave);
     *(shared->membersStillToLeave) = 3; //initialization (3, since boat capacity is 4)
 
     int status1 = 0;
@@ -305,9 +322,12 @@ int mainWrapper(int argc, char* argv[]){
 
 
         //clean up
-        munmap(shared->actionCounter, sizeof(int));
-        munmap(shared->hacksOnPier, sizeof(int));
-        munmap(shared->serfsOnPier, sizeof(int));
+        munmap(shared->(actionCounter), sizeof(int));
+        shm_unlink("/shmActionCounter");
+        munmap(shared->(hacksOnPier), sizeof(int));
+        shm_unlink("/shmHacksOnPier");
+        munmap(shared->(serfsOnPier), sizeof(int));
+        shm_unlink("/shmSerfsOnPier");
         sem_destroy(shared->mutex);
         sem_destroy(shared->semActionCounter);
         sem_destroy(shared->semHackCounter);
@@ -318,15 +338,24 @@ int mainWrapper(int argc, char* argv[]){
         sem_destroy(shared->semTurnstile2);
         sem_destroy(shared->captainsMutex);
         sem_destroy(shared->semIO);
-        munmap(shared->mutex, sizeof(sem_t));
-        munmap(shared->semTurnstile1, sizeof(sem_t));
-        munmap(shared->semTurnstile2, sizeof(sem_t));
-        munmap(shared->captainsMutex, sizeof(sem_t));
-        munmap(shared->boatCounter, sizeof(int));
-        munmap(shared->hacksOnBoat, sizeof(int));
-        munmap(shared->serfsOnBoat, sizeof(int));
-        munmap(shared->hacksWaitingToBoard, sizeof(int));
-        munmap(shared->serfsWaitingToBoard, sizeof(int));
+        munmap(shared->(mutex), sizeof(sem_t));
+        shm_unlink("/shmMutex");
+        munmap(shared->(semTurnstile1), sizeof(sem_t));
+        shm_unlink("/shmSemTurnstile1");
+        munmap(shared->(semTurnstile2), sizeof(sem_t));
+        shm_unlink("/shmSemTurnstile2");
+        munmap(shared->(captainsMutex), sizeof(sem_t));
+        shm_unlink("/shmCaptainsMutex");
+        munmap(shared->(boatCounter), sizeof(int));
+        shm_unlink("/shmBoatCounter");
+        munmap(shared->(hacksOnBoat), sizeof(int));
+        shm_unlink("/shmHacksOnBoat");
+        munmap(shared->(serfsOnBoat), sizeof(int));
+        shm_unlink("/shmSerfsOnBoat");
+        munmap(shared->(hacksWaitingToBoard), sizeof(int));
+        shm_unlink("/shmHacksWaitingToBoard");
+        munmap(shared->(serfsWaitingToBoard), sizeof(int));
+        shm_unlink("/shmSerfsWaitingToBoard");
 
         exit(0);
     }
