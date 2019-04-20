@@ -580,7 +580,7 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
                 sem_wait(shared->mutex);
                 printf("%d: %s %d: captain exits: %d: %d\n", *(shared->actionCounter), typeStr, *id, *(shared->hacksOnPier), *(shared->serfsOnPier));
                 (*(shared->actionCounter))++;
-                (*(shared->membersStillToLeave)) == 3; //reset the member counter
+                (*(shared->membersStillToLeave)) = 3; //reset the member counter
                 //sem_wait(shared->semCaptainCanLeave); //relocks the semaphore
                 sem_post(shared->captainsMutex);
             }else{
