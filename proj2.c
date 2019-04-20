@@ -356,11 +356,11 @@ int mainWrapper(int argc, char* argv[]){
         sem_destroy(shared->semIO);
 
         sem_destroy(shared->semHacksOnPierQueue);
-        munmap(shared->semHacksOnPierQueue);
+        munmap(shared->semHacksOnPierQueue, sizeof(sem_t));
         shm_unlink("/shmHacksOnPierQueue");
 
         sem_destroy(shared->semSerfsOnPierQueue);
-        munmap(shared->semSerfsOnPierQueue);
+        munmap(shared->semSerfsOnPierQueue, sizeof(sem_t));
         shm_unlink("/shmSerfsOnPierQueue");
 
         sem_destroy(shared->mutex);
