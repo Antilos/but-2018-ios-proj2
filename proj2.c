@@ -73,7 +73,7 @@ typedef struct shm_sem{
     sem_t *semTurnstile1;
     sem_t *semTurnstile2;
     sem_t *captainsMutex;
-    sem_t *semBoardRide;
+    sem_t *semBoatRide;
     int *membersStillToLeave;
     sem_t *semCaptainCanLeave;
 }shm_sem_t;
@@ -263,11 +263,11 @@ int mainWrapper(int argc, char* argv[]){
     }
 
     /*Semaphore to keep persons from exiting the boat before the ride is over*/
-    int shmSemBoardRide = shm_open("/shmSemBoardRide", O_CREAT | O_RDWR, 0666);
-    ftruncate(shmSemBoardRide, sizeof(sem_t));
-    shared->semBoardRide = (sem_t*)mmap(0, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED, shmSemBoardRide, 0);
-    close(shmSemBoardRide);
-    if(sem_init(shared->semBoardRide, 1, 0) < 0){
+    int shmSemBoatRide = shm_open("/shmSemBoatRide", O_CREAT | O_RDWR, 0666);
+    ftruncate(shmSemBoatRide, sizeof(sem_t));
+    shared->semBoatRide = (sem_t*)mmap(0, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED, shmSemBoatRide, 0);
+    close(shmSemBoatRide);
+    if(sem_init(shared->semBoatRide, 1, 0) < 0){
         return 3; //Error while initializing semaphore
     }
 
@@ -324,38 +324,68 @@ int mainWrapper(int argc, char* argv[]){
         //clean up
         munmap(shared->actionCounter, sizeof(int));
         shm_unlink("/shmActionCounter");
+
         munmap(shared->hacksOnPier, sizeof(int));
         shm_unlink("/shmHacksOnPier");
+
         munmap(shared->serfsOnPier, sizeof(int));
         shm_unlink("/shmSerfsOnPier");
-        sem_destroy(shared->mutex);
+
+        munmap(shared->boatCounter, sizeof(int));
+        shm_unlink("/shmBoatCounter");
+
+        munmap(shared->hacksOnBoat, sizeof(int));
+        shm_unlink("/shmHacksOnBoat");
+
+        munmap(shared->serfsOnBoat, sizeof(int));
+        shm_unlink("/shmSerfsOnBoat");
+
+        munmap(shared->hacksWaitingToBoard, sizeof(int));
+        shm_unlink("/shmHacksWaitingToBoard");
+
+        munmap(shared->serfsWaitingToBoard, sizeof(int));
+        shm_unlink("/shmSerfsWaitingToBoard");
+
+        munmap(shared->membersStillToLeave, sizeof(int));
+        shm_unlink("/shmMembersStillToLeave");
+
+
         sem_destroy(shared->semActionCounter);
         sem_destroy(shared->semHackCounter);
         sem_destroy(shared->semSerfCounter);
-        sem_destroy(shared->semSerfsOnPierQueue);
-        sem_destroy(shared->semHacksOnPierQueue);
-        sem_destroy(shared->semTurnstile1);
-        sem_destroy(shared->semTurnstile2);
-        sem_destroy(shared->captainsMutex);
         sem_destroy(shared->semIO);
+
+        sem_destroy(shared->semHacksOnPierQueue);
+        munmap(shared->semHacksOnPierQueue);
+        shm_unlink("/shmHacksOnPierQueue");
+
+        sem_destroy(shared->semSerfsOnPierQueue);
+        munmap(shared->semSerfsOnPierQueue);
+        shm_unlink("/shmSerfsOnPierQueue");
+
+        sem_destroy(shared->mutex);
         munmap(shared->mutex, sizeof(sem_t));
         shm_unlink("/shmMutex");
+
+        sem_destroy(shared->semTurnstile1);
         munmap(shared->semTurnstile1, sizeof(sem_t));
-        shm_unlink("/shmSemTurnstile1");
+        shm_unlink("/shmTurnstile1");
+
+        sem_destroy(shared->semTurnstile2);
         munmap(shared->semTurnstile2, sizeof(sem_t));
-        shm_unlink("/shmSemTurnstile2");
+        shm_unlink("/shmTurnstile2");
+
+        sem_destroy(shared->captainsMutex);
         munmap(shared->captainsMutex, sizeof(sem_t));
         shm_unlink("/shmCaptainsMutex");
-        munmap(shared->boatCounter, sizeof(int));
-        shm_unlink("/shmBoatCounter");
-        munmap(shared->hacksOnBoat, sizeof(int));
-        shm_unlink("/shmHacksOnBoat");
-        munmap(shared->serfsOnBoat, sizeof(int));
-        shm_unlink("/shmSerfsOnBoat");
-        munmap(shared->hacksWaitingToBoard, sizeof(int));
-        shm_unlink("/shmHacksWaitingToBoard");
-        munmap(shared->serfsWaitingToBoard, sizeof(int));
-        shm_unlink("/shmSerfsWaitingToBoard");
+
+        sem_destroy(shared->semBoatRide);
+        munmap(shared->semBoatRide, sizeof(sem_t));
+        shm_unlink("/shmSemBoatRide");
+
+        sem_destroy(shared->semCaptainCanLeave);
+        munmap(shared->semCaptainCanLeave, sizeof(sem_t));
+        shm_unlink("/shmSemCaptainCanLeave");
 
         exit(0);
     }
@@ -419,7 +449,9 @@ int generatePersons(int type, args_t *args, shm_sem_t *shared){
     //clean up
     free(pids);
     munmap(shared->hackCounter, sizeof(int));
+    shm_unlink("/shmHackCounter");
     munmap(shared->serfCounter, sizeof(int));
+    shm_unlink("/shmSerfCounter");
     sem_destroy(shared->semHackCounter);
     sem_destroy(shared->semSerfCounter);
     
@@ -603,13 +635,13 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
             if(isCaptain){
                 int r = rand() % ((args->R)*1000+1)+20*1000;
                 usleep(r);
-                sem_post(shared->semBoardRide);
+                sem_post(shared->semBoatRide);
             }else{
                 sem_wait(shared->mutex);
                 dprintf("-- %s %d: waiting for Captain to wake up\n", typeStr, *id, *(shared->boatCounter));
                 sem_post(shared->mutex);
-                sem_wait(shared->semBoardRide);
-                sem_post(shared->semBoardRide);
+                sem_wait(shared->semBoatRide);
+                sem_post(shared->semBoatRide);
             }
             dprintf("-- %s %d: Boat ride done boatCounter: %d\n", typeStr, *id, *(shared->boatCounter));
 
