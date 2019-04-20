@@ -322,11 +322,11 @@ int mainWrapper(int argc, char* argv[]){
 
 
         //clean up
-        munmap(shared->(actionCounter), sizeof(int));
+        munmap(shared->actionCounter, sizeof(int));
         shm_unlink("/shmActionCounter");
-        munmap(shared->(hacksOnPier), sizeof(int));
+        munmap(shared->hacksOnPier, sizeof(int));
         shm_unlink("/shmHacksOnPier");
-        munmap(shared->(serfsOnPier), sizeof(int));
+        munmap(shared->serfsOnPier, sizeof(int));
         shm_unlink("/shmSerfsOnPier");
         sem_destroy(shared->mutex);
         sem_destroy(shared->semActionCounter);
@@ -338,23 +338,23 @@ int mainWrapper(int argc, char* argv[]){
         sem_destroy(shared->semTurnstile2);
         sem_destroy(shared->captainsMutex);
         sem_destroy(shared->semIO);
-        munmap(shared->(mutex), sizeof(sem_t));
+        munmap(shared->mutex, sizeof(sem_t));
         shm_unlink("/shmMutex");
-        munmap(shared->(semTurnstile1), sizeof(sem_t));
+        munmap(shared->semTurnstile1, sizeof(sem_t));
         shm_unlink("/shmSemTurnstile1");
-        munmap(shared->(semTurnstile2), sizeof(sem_t));
+        munmap(shared->semTurnstile2, sizeof(sem_t));
         shm_unlink("/shmSemTurnstile2");
-        munmap(shared->(captainsMutex), sizeof(sem_t));
+        munmap(shared->captainsMutex, sizeof(sem_t));
         shm_unlink("/shmCaptainsMutex");
-        munmap(shared->(boatCounter), sizeof(int));
+        munmap(shared->boatCounter, sizeof(int));
         shm_unlink("/shmBoatCounter");
-        munmap(shared->(hacksOnBoat), sizeof(int));
+        munmap(shared->hacksOnBoat, sizeof(int));
         shm_unlink("/shmHacksOnBoat");
-        munmap(shared->(serfsOnBoat), sizeof(int));
+        munmap(shared->serfsOnBoat, sizeof(int));
         shm_unlink("/shmSerfsOnBoat");
-        munmap(shared->(hacksWaitingToBoard), sizeof(int));
+        munmap(shared->hacksWaitingToBoard, sizeof(int));
         shm_unlink("/shmHacksWaitingToBoard");
-        munmap(shared->(serfsWaitingToBoard), sizeof(int));
+        munmap(shared->serfsWaitingToBoard, sizeof(int));
         shm_unlink("/shmSerfsWaitingToBoard");
 
         exit(0);
