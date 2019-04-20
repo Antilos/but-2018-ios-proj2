@@ -60,10 +60,10 @@ typedef struct shm_sem{
     int *hacksOnPier;
     int *serfsOnPier;
 
-    int *hacksWaitingToBoard;
-    int *serfsWaitingToBoard;
 
     //for synchronizing boarding
+    int *hacksWaitingToBoard; //same as number of persons waiting on in Queue
+    int *serfsWaitingToBoard; //same as number of persons waiting on in Queue
     sem_t *semHacksOnPierQueue;
     sem_t *semSerfsOnPierQueue;
     int boatCapacity;
@@ -184,6 +184,18 @@ int mainWrapper(int argc, char* argv[]){
     ftruncate(shmBoatCounter, sizeof(int));
     shared->boatCounter = (int*)mmap(0, sizeof(int), PROT_READ|PROT_WRITE, MAP_SHARED, shmBoatCounter, 0);
     *(shared->boatCounter) = 0; //initialization
+
+    /*shared hacks in queue counter*/
+    int shmHacksWaitingToBoard = shm_open("/shmHacksWaitingToBoard", O_CREAT | O_RDWR, 0666);
+    ftruncate(shmHacksWaitingToBoard, sizeof(int));
+    shared->hacksWaitingToBoard = (int*)mmap(0, sizeof(int), PROT_READ|PROT_WRITE, MAP_SHARED, shmHacksWaitingToBoard, 0);
+    *(shared->hacksWaitingToBoard) = 0; //initialization
+
+    /*shared serfs in queue counter*/
+    int shmSerfsWaitingToBoard = shm_open("/shmSerfsWaitingToBoard", O_CREAT | O_RDWR, 0666);
+    ftruncate(shmSerfsWaitingToBoard, sizeof(int));
+    shared->serfsWaitingToBoard = (int*)mmap(0, sizeof(int), PROT_READ|PROT_WRITE, MAP_SHARED, shmSerfsWaitingToBoard, 0);
+    *(shared->serfsWaitingToBoard) = 0; //initialization
 
     /*HacksOnPierQueue*/
     int shmHacksOnPierQueue = shm_open("/shmHacksOnPierQueue", O_CREAT | O_RDWR, 0666);
@@ -313,6 +325,8 @@ int mainWrapper(int argc, char* argv[]){
         munmap(shared->boatCounter, sizeof(int));
         munmap(shared->hacksOnBoat, sizeof(int));
         munmap(shared->serfsOnBoat, sizeof(int));
+        munmap(shared->hacksWaitingToBoard, sizeof(int));
+        munmap(shared->serfsWaitingToBoard, sizeof(int));
 
         exit(0);
     }
@@ -408,6 +422,8 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
     int *personsCounter;
     int *personsOnPier;
     int *otherPersonsOnPier;
+    int *personsWaitingToBoard;
+    int *otherPersonsWaitingToBoard;
     sem_t *semPersonsCounter;
     sem_t *semPersonsOnPierQueue;
     sem_t *semOtherPersonsOnPierQueue;
@@ -419,6 +435,8 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
         semPersonsOnPierQueue = shared->semHacksOnPierQueue;
         otherPersonsOnPier = shared->serfsOnPier;
         semOtherPersonsOnPierQueue = shared->semSerfsOnPierQueue;
+        personsWaitingToBoard = shared->hacksWaitingToBoard;
+        otherPersonsWaitingToBoard = shared->serfsWaitingToBoard;
     }else{
         strcpy(typeStr, "SERF");
         personsCounter = shared->serfCounter;
@@ -427,6 +445,8 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
         semPersonsOnPierQueue = shared->semSerfsOnPierQueue;
         otherPersonsOnPier = shared->hacksOnPier;
         semOtherPersonsOnPierQueue = shared->semHacksOnPierQueue;
+        personsWaitingToBoard = shared->serfsWaitingToBoard;
+        otherPersonsWaitingToBoard = shared->hacksWaitingToBoard;
     }
 
     //preform action
@@ -479,7 +499,7 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
             dprintf("-- %s %d: I'll try to be Captain\n", typeStr, *id, *(shared->boatCounter));
             sem_post(shared->mutex);
             //check if there is enough people to form crew
-            if(*personsOnPier >= 4){
+            if(*personsWaitingToBoard >= 4){
                 //sem_wait(shared->captainsMutex);
                 sem_wait(shared->mutex);
                 for(int i = 0; i < 4; i++)
@@ -487,10 +507,11 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
                     sem_post(semPersonsOnPierQueue); //let 4 persons board
                 }
                 (*(personsOnPier))-=4;
+                (*(personsWaitingToBoard))-=4;
                 isCaptain = true; //become captain
                 dprintf("-- %s %d: I'll be Captain\n", typeStr, *id, *(shared->boatCounter));
                 sem_post(shared->mutex);
-            }else if(*personsOnPier >= 2 && *otherPersonsOnPier >= 2){
+            }else if(*personsWaitingToBoard >= 2 && *otherPersonsWaitingToBoard >= 2){
                 //sem_wait(shared->captainsMutex);
                 sem_wait(shared->mutex);
                 for(int i = 0; i < 2; i++)
@@ -502,7 +523,9 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
                     sem_post(semOtherPersonsOnPierQueue); //let 2 persons board
                 }
                 (*(personsOnPier))-=2;
+                (*(personsWaitingToBoard))-=2;
                 (*(otherPersonsOnPier))-=2;
+                (*(otherPersonsWaitingToBoard))-=2;
                 isCaptain = true; //become captain
                 dprintf("-- %s %d: I'll be Captain\n", typeStr, *id, *(shared->boatCounter));
                 sem_post(shared->mutex);
@@ -512,7 +535,10 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
                 //return 1; //didn't manage to board
             }
 
+            sem_wait(shared->mutex);
+            (*(personsWaitingToBoard))++;
             dprintf("-- %s %d: waiting in queue\n", typeStr, *id, *(shared->boatCounter));
+            sem_post(shared->mutex);
             sem_wait(semPersonsOnPierQueue); //wait for the captain to let us board
 
             //ALL ABOARD!!!
