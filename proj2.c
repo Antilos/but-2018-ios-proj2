@@ -289,6 +289,9 @@ int mainWrapper(int argc, char* argv[]){
     close(shmMembersStillToLeave);
     *(shared->membersStillToLeave) = 3; //initialization (3, since boat capacity is 4)
 
+    /*open output file*/
+    freopen("proj2.out", "W", stdout);
+
     int status1 = 0;
     int status2 = 0;
     /*start the generators*/
@@ -314,13 +317,13 @@ int mainWrapper(int argc, char* argv[]){
         sem_post(shared->mutex);
         int exitPid = 0;
         exitPid = waitpid(0, &status1, 0);
-        sem_wait(shared->mutex);
-        printf("Parent: Generator %d has exited\n", exitPid);
-        sem_post(shared->mutex);
+        //sem_wait(shared->mutex);
+        //printf("Parent: Generator %d has exited\n", exitPid);
+        //sem_post(shared->mutex);
         exitPid = waitpid(0, &status2, 0);
-        sem_wait(shared->mutex);
-        printf("Parent: Generator %d has exited\n", exitPid);
-        sem_post(shared->mutex);
+        //sem_wait(shared->mutex);
+        //printf("Parent: Generator %d has exited\n", exitPid);
+        //sem_post(shared->mutex);
 
 
         //clean up
