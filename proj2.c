@@ -13,10 +13,12 @@
 
 #include <semaphore.h>
 
+#ifndef NDEBUG
 #define log(msg) do{printf("LOG: %s\n", msg);}while(0)
 #define elog(msg) do{printf("ERROR LOG: %s\n", msg);}while(0)
 #define msg(caller, msg) do{printf("%s: %s\n", caller, msg);}while(0)
 #define dprintf(...) do{printf(__VA_ARGS__);}while(0)
+#endif
 
 #ifdef NDEBUG
 #define log(msg) do{;}while(0)
@@ -430,7 +432,7 @@ int generatePersons(int type, args_t *args, shm_sem_t *shared){
     
 
     //fork P new persons
-    for(size_t i = 0; i < args->P; i++)
+    for(int i = 0; i < args->P; i++)
     {
         int r = rand() % (spawnTime+1); //determine the spawn time for this person
         usleep(r);
@@ -442,7 +444,7 @@ int generatePersons(int type, args_t *args, shm_sem_t *shared){
             exit(0);
         }
     }
-    for(size_t i = 0; i < args->P; i++){
+    for(int i = 0; i < args->P; i++){
         waitpid(pids[i], NULL, 0);
     }
 
