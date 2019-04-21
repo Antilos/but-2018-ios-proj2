@@ -290,6 +290,7 @@ int mainWrapper(int argc, char* argv[]){
     *(shared->membersStillToLeave) = 3; //initialization (3, since boat capacity is 4)
 
     /*open output file*/
+    FILE* fout = fopen("proj2.out", "W");
     //freopen("proj2.out", "W", stdout);
 
     int status1 = 0;
@@ -521,7 +522,7 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
         case spawn:
             sem_wait(shared->mutex);
             *id = *(personsCounter);
-            printf("%d: %s %d: starts\n", *(shared->actionCounter), typeStr, *id);
+            fprintf(fout, "%d: %s %d: starts\n", *(shared->actionCounter), typeStr, *id);
             (*(shared->actionCounter))++;
             (*(personsCounter))++;
             sem_post(shared->mutex);
@@ -532,13 +533,13 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
                 if((*(shared->serfsOnPier) + *(shared->hacksOnPier)) < args->C){ //there's room
                     sem_wait(shared->mutex);
                     (*(personsOnPier))++;
-                    printf("%d: %s %d: waits: %d: %d.\n", *(shared->actionCounter), typeStr, *id, *(shared->hacksOnPier), *(shared->serfsOnPier));
+                    fprintf(fout, "%d: %s %d: waits: %d: %d.\n", *(shared->actionCounter), typeStr, *id, *(shared->hacksOnPier), *(shared->serfsOnPier));
                     (*(shared->actionCounter))++;
                     sem_post(shared->mutex);
                     break;
                 }else{
                     sem_wait(shared->mutex);
-                    printf("%d: %s %d: leaves queue: %d: %d.\n", *(shared->actionCounter), typeStr, *id, *(shared->hacksOnPier), *(shared->serfsOnPier));
+                    fprintf(fout, "%d: %s %d: leaves queue: %d: %d.\n", *(shared->actionCounter), typeStr, *id, *(shared->hacksOnPier), *(shared->serfsOnPier));
                     (*(shared->actionCounter))++;
                     sem_post(shared->mutex);
 
@@ -547,7 +548,7 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
                     usleep(r);
 
                     sem_wait(shared->mutex);
-                    printf("%d: %s %d: is back\n", *(shared->actionCounter), typeStr, *id);
+                    fprintf(fout, "%d: %s %d: is back\n", *(shared->actionCounter), typeStr, *id);
                     (*(shared->actionCounter))++;
                     sem_post(shared->mutex);
                     //exit(0);
@@ -631,7 +632,7 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
             sem_post(shared->mutex);
             
             if(isCaptain){
-                printf("%d: %s %d: boards: %d: %d\n", *(shared->actionCounter), typeStr, *id, *(shared->hacksOnPier), *(shared->serfsOnPier));
+                fprintf(fout, "%d: %s %d: boards: %d: %d\n", *(shared->actionCounter), typeStr, *id, *(shared->hacksOnPier), *(shared->serfsOnPier));
                 (*(shared->actionCounter))++;
             }
 
@@ -670,14 +671,14 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
             if(isCaptain){
                 sem_wait(shared->semCaptainCanLeave); //wait for all members to get off
                 sem_wait(shared->mutex);
-                printf("%d: %s %d: captain exits: %d: %d\n", *(shared->actionCounter), typeStr, *id, *(shared->hacksOnPier), *(shared->serfsOnPier));
+                fprintf(fout, "%d: %s %d: captain exits: %d: %d\n", *(shared->actionCounter), typeStr, *id, *(shared->hacksOnPier), *(shared->serfsOnPier));
                 (*(shared->actionCounter))++;
                 (*(shared->membersStillToLeave)) = 3; //reset the member counter
                 //sem_wait(shared->semCaptainCanLeave); //relocks the semaphore
                 sem_post(shared->captainsMutex);
             }else{
                 sem_wait(shared->mutex);
-                printf("%d: %s %d: member exits: %d: %d\n", *(shared->actionCounter), typeStr, *id, *(shared->hacksOnPier), *(shared->serfsOnPier));
+                fprintf(fout, "%d: %s %d: member exits: %d: %d\n", *(shared->actionCounter), typeStr, *id, *(shared->hacksOnPier), *(shared->serfsOnPier));
                 (*(shared->actionCounter))++;
                 (*(shared->membersStillToLeave))--;
                 if(*(shared->membersStillToLeave) == 0){ //are all the members gone?
