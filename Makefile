@@ -2,6 +2,7 @@ CFLAGS = -std=gnu99 -Wall -Wextra -pedantic -Wno-unknown-pragmas -g3
 RESULTS = proj2
 ARCHIVE = xkocal00.zip
 
+#define macro DEBUG if you want to show debug messages
 DEBUG =
 
 .PHONY = clean

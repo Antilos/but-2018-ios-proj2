@@ -13,14 +13,14 @@
 
 #include <semaphore.h>
 
-#ifndef NDEBUG
+#ifdef DEBUG
 #define log(msg) do{printf("LOG: %s\n", msg);}while(0)
 #define elog(msg) do{printf("ERROR LOG: %s\n", msg);}while(0)
 #define msg(caller, msg) do{printf("%s: %s\n", caller, msg);}while(0)
 #define dprintf(...) do{printf(__VA_ARGS__);}while(0)
 #endif
 
-#ifdef NDEBUG
+#ifndef DEBUG
 #define log(msg) do{;}while(0)
 #define elog(msg) do{;}while(0)
 #define msg(caller, msg) do{;}while(0)
