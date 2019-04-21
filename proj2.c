@@ -487,13 +487,13 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
     int *otherPersonsOnPier;
     int *personsWaitingToBoard;
     int *otherPersonsWaitingToBoard;
-    sem_t *semPersonsCounter;
+    //sem_t *semPersonsCounter;
     sem_t *semPersonsOnPierQueue;
     sem_t *semOtherPersonsOnPierQueue;
     if(type == HACK){
         strcpy(typeStr, "HACK");
         personsCounter = shared->hackCounter;
-        semPersonsCounter = shared->semHackCounter;
+        //semPersonsCounter = shared->semHackCounter;
         personsOnPier = shared->hacksOnPier;
         semPersonsOnPierQueue = shared->semHacksOnPierQueue;
         otherPersonsOnPier = shared->serfsOnPier;
@@ -503,7 +503,7 @@ int output(int type, action_t action, args_t *args, shm_sem_t *shared, int* id){
     }else{
         strcpy(typeStr, "SERF");
         personsCounter = shared->serfCounter;
-        semPersonsCounter = shared->semSerfCounter;
+        //semPersonsCounter = shared->semSerfCounter;
         personsOnPier = shared->serfsOnPier;
         semPersonsOnPierQueue = shared->semSerfsOnPierQueue;
         otherPersonsOnPier = shared->hacksOnPier;
