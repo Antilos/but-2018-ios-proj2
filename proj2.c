@@ -290,7 +290,7 @@ int mainWrapper(int argc, char* argv[]){
     *(shared->membersStillToLeave) = 3; //initialization (3, since boat capacity is 4)
 
     /*open output file*/
-    freopen("proj2.out", "W", stdout);
+    //freopen("proj2.out", "W", stdout);
 
     int status1 = 0;
     int status2 = 0;
