@@ -48,6 +48,8 @@ typedef struct Args{
 }args_t;
 
 typedef struct shm_sem{
+    FILE* fout; //output file
+
     sem_t *mutex;
     sem_t *semIO;
     
@@ -290,7 +292,7 @@ int mainWrapper(int argc, char* argv[]){
     *(shared->membersStillToLeave) = 3; //initialization (3, since boat capacity is 4)
 
     /*open output file*/
-    FILE* fout = fopen("proj2.out", "W");
+    shared->fout = fopen("proj2.out", "W");
     //freopen("proj2.out", "W", stdout);
 
     int status1 = 0;
